@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ejercicios de Diagramas de Flujo — Simulador Paso a Paso</title>
+  <style>
+    :root { --bg:#f4f7fb; --card:#fff; --text:#102033; --muted:#5a6b80; --border:#d7e0ec; --primary:#0d5ca8; }
+    [data-theme="dark"] { --bg:#0a111f; --card:#131e33; --text:#eef4fb; --muted:#97abc5; --border:#253755; --primary:#55a8ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:960px; margin:0 auto; padding:22px 16px 60px; }
+    .top { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:16px; }
+    .row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:12px; }
+    input, select, button { font:inherit; padding:9px 11px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); }
+    button { cursor:pointer; font-weight:600; }
+    .btn-primary { background:var(--primary); color:#fff; border-color:transparent; }
+    .flow { display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:12px; }
+    .node { min-width:240px; max-width:100%; text-align:center; padding:10px 16px; border:2px solid var(--primary); border-radius:10px; background:var(--bg); font-size:14px; font-weight:600; }
+    .node.term { border-radius:999px; background:var(--primary); color:#fff; }
+    .arrow { color:var(--muted); font-size:18px; line-height:1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1 style="margin:0;">🔀 Ejercicios de Diagramas de Flujo</h1>
+        <div style="color:var(--muted);font-size:14px;">Ejecuta algoritmos clásicos y visualiza su diagrama y traza paso a paso</div>
+      </div>
+      <button type="button" id="themeBtn">🌙 Oscuro</button>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <select id="algo" aria-label="Ejercicio">
+          <option value="parImpar">1. Número Par o Impar</option>
+          <option value="mayorDeTres">2. Mayor de Tres Números</option>
+          <option value="factorial">3. Factorial (n!)</option>
+          <option value="fibonacci">4. Serie de Fibonacci</option>
+          <option value="esPrimo">5. Verificar Número Primo</option>
+          <option value="evaluarNota">6. Promedio y Aprobación</option>
+        </select>
+        <input id="inp1" value="7" placeholder="Entrada principal (o lista separada por comas)" />
+        <button type="button" id="runBtn" class="btn-primary">▶ Ejecutar flujo</button>
+      </div>
+      <div id="resOut" style="font-weight:700;font-size:16px;"></div>
+      <div id="flow" class="flow"></div>
+    </div>
+  </div>
+  <script src="./algorithms.js"></script>
+  <script>
+    (function () {
+      var A = window.FlowchartAlgorithms, TKEY = 'flowcharts_theme';
+      function $(id) { return document.getElementById(id); }
+      function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+      function setTheme(t) { document.documentElement.setAttribute('data-theme', t); try { localStorage.setItem(TKEY, t); } catch (e) {} $('themeBtn').textContent = t === 'dark' ? '☀️ Claro' : '🌙 Oscuro'; }
+      setTheme(localStorage.getItem(TKEY) === 'dark' ? 'dark' : 'light');
+      $('themeBtn').addEventListener('click', function () { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); });
+
+      var placeholders = { parImpar: '42', mayorDeTres: '12, 45, 29', factorial: '6', fibonacci: '8', esPrimo: '29', evaluarNota: '85, 72, 90' };
+      $('algo').addEventListener('change', function () { $('inp1').value = placeholders[$('algo').value] || ''; run(); });
+
+      function run() {
+        var mode = $('algo').value, raw = $('inp1').value.trim();
+        var parts = raw.split(',').map(function (s) { return s.trim(); });
+        var out;
+        if (mode === 'parImpar') out = A.parImpar(raw);
+        else if (mode === 'mayorDeTres') out = A.mayorDeTres(parts[0], parts[1], parts[2]);
+        else if (mode === 'factorial') out = A.factorial(raw);
+        else if (mode === 'fibonacci') out = A.fibonacci(raw);
+        else if (mode === 'esPrimo') out = A.esPrimo(raw);
+        else out = A.evaluarNota(parts);
+
+        if (!out.ok) { $('resOut').textContent = out.error; $('flow').innerHTML = ''; return; }
+        var rText = typeof out.result === 'object' ? JSON.stringify(out.result) : String(out.result);
+        $('resOut').textContent = 'Resultado: ' + rText;
+        $('flow').innerHTML = out.steps.map(function (s, idx) {
+          var term = idx === 0 || idx === out.steps.length - 1;
+          return (idx > 0 ? '<div class="arrow">↓</div>' : '') + '<div class="node' + (term ? ' term' : '') + '">' + esc(s) + '</div>';
+        }).join('');
+      }
+      $('runBtn').addEventListener('click', run);
+      run();
+    })();
+  </script>
+</body>
+</html>
